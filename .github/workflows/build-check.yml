@@ -1,26 +1,39 @@
-name: build-check for pull-request
+name: PR Build Check
 
 on:
-  push:
-    branches: [ "develop" ]
   pull_request:
-    branches: [ "develop" ]
+    branches:
+      - develop
 
 jobs:
   build:
+    name: Check Build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Project
         uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.32.0
+          flutter-version: 3.22.2
+          channel: stable
 
-      - name: Install Dependencies
+      - name: Get Dependencies
         run: flutter pub get
-        
+
+      - name: Analyze Project
+        run: flutter analyze
+
+      - name: Run Tests
+        run: flutter test
+
       - name: Build APK
         run: flutter build apk --debug
