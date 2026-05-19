@@ -1,4 +1,4 @@
-name: Build check for pull-request 
+name: build-check for pull-request
 
 on:
   push:
@@ -17,11 +17,10 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.11.4'
-          channel: 'stable'
+          flutter-version: 3.32.0
 
       - name: Install Dependencies
         run: flutter pub get
-
+        
       - name: Build APK
         run: flutter build apk --debug
