@@ -1,6 +1,9 @@
 name: PR Build Check
 
 on:
+  push:
+    branches:
+      - develop
   pull_request:
     branches:
       - develop
