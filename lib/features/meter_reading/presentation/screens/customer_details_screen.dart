@@ -5,6 +5,7 @@ import '../../domain/entities/meter_reading.dart';
 import '../../domain/usecases/get_meter_readings.dart';
 import '../widgets/reading_tile.dart';
 import 'add_reading_screen.dart';
+import 'invoice_screen.dart';
 
 /// Displays customer details and their reading history.
 class CustomerDetailsScreen extends StatefulWidget {
@@ -239,9 +240,20 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
+                  final reading = _readings[index];
                   return ReadingTile(
-                    reading: _readings[index],
+                    reading: reading,
                     index: _readings.length - index,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => InvoiceScreen(
+                            customer: widget.customer,
+                            reading: reading,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
                 childCount: _readings.length,
@@ -272,7 +284,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
     );
 
     // Refresh readings if a new one was added
-    if (result == true) {
+    if (result == true || result == null) {
       _loadReadings();
     }
   }

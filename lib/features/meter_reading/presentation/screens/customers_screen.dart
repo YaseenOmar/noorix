@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../settings/presentation/screens/settings_screen.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/usecases/get_customers.dart';
 import '../widgets/customer_card.dart';
+import 'add_customer_screen.dart';
 import 'customer_details_screen.dart';
 
 /// Displays the list of all customers.
@@ -50,6 +52,29 @@ class _CustomersScreenState extends State<CustomersScreen> {
             expandedHeight: 140,
             backgroundColor: colorScheme.surface,
             surfaceTintColor: Colors.transparent,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  showSearch(
+                    context: context,
+                    delegate: CustomerSearchDelegate(
+                      customers: _customers,
+                      onCustomerTap: _navigateToDetails,
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
@@ -147,8 +172,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
             ),
 
           // Bottom spacing
-          const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToAddCustomer,
+        icon: const Icon(Icons.person_add_rounded),
+        label: const Text('إضافة عميل'),
       ),
     );
   }
@@ -158,6 +188,90 @@ class _CustomersScreenState extends State<CustomersScreen> {
       MaterialPageRoute(
         builder: (_) => CustomerDetailsScreen(customer: customer),
       ),
+    );
+  }
+
+  Future<void> _navigateToAddCustomer() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const AddCustomerScreen()),
+    );
+
+    if (result == true) {
+      _loadCustomers();
+    }
+  }
+}
+
+class CustomerSearchDelegate extends SearchDelegate {
+  final List<Customer> customers;
+  final Function(Customer) onCustomerTap;
+
+  CustomerSearchDelegate({
+    required this.customers,
+    required this.onCustomerTap,
+  }) : super(
+          searchFieldLabel: 'بحث عن عميل...',
+          keyboardType: TextInputType.text,
+        );
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () => query = '',
+        ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) => _buildSearchResults();
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildSearchResults();
+
+  Widget _buildSearchResults() {
+    final filteredList = customers
+        .where((c) =>
+            c.name.toLowerCase().contains(query.toLowerCase()) ||
+            c.meterNumber.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    if (filteredList.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.search_off, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text('لا يوجد نتائج لـ "$query"'),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: filteredList.length,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemBuilder: (context, index) {
+        final customer = filteredList[index];
+        return CustomerCard(
+          customer: customer,
+          onTap: () {
+            close(context, null);
+            onCustomerTap(customer);
+          },
+        );
+      },
     );
   }
 }

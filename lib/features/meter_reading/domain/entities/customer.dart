@@ -3,11 +3,15 @@ class Customer {
   final int id;
   final String name;
   final String meterNumber;
+  final String phoneNumber;
+  final String address;
 
   const Customer({
     required this.id,
     required this.name,
     required this.meterNumber,
+    this.phoneNumber = '',
+    this.address = '',
   });
 
   @override

@@ -3,9 +3,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/di/service_locator.dart';
 import 'features/meter_reading/presentation/screens/customers_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  ServiceLocator.instance.init();
+  await ServiceLocator.instance.init();
   runApp(const NoorixSupportApp());
 }
 

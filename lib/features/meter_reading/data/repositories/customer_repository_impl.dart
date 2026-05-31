@@ -15,6 +15,11 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Future<void> addCustomer(Customer customer) {
+    return dataSource.addCustomer(customer);
+  }
+
+  @override
   Future<List<MeterReading>> getMeterReadings(int customerId) {
     return dataSource.getMeterReadings(customerId);
   }

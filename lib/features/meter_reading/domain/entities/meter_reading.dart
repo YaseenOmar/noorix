@@ -3,12 +3,20 @@ class MeterReading {
   final int id;
   final int customerId;
   final double value;
+  final double previousValue;
+  final double consumption;
+  final double pricePerKwh;
+  final double totalBill;
   final DateTime readingDate;
 
   const MeterReading({
     required this.id,
     required this.customerId,
     required this.value,
+    required this.previousValue,
+    required this.consumption,
+    required this.pricePerKwh,
+    required this.totalBill,
     required this.readingDate,
   });
 

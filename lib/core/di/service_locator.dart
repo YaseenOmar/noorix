@@ -1,9 +1,13 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/meter_reading/data/datasources/customer_data_source.dart';
 import '../../features/meter_reading/data/repositories/customer_repository_impl.dart';
 import '../../features/meter_reading/domain/repositories/customer_repository.dart';
+import '../../features/meter_reading/domain/usecases/add_customer.dart';
 import '../../features/meter_reading/domain/usecases/add_meter_reading.dart';
 import '../../features/meter_reading/domain/usecases/get_customers.dart';
 import '../../features/meter_reading/domain/usecases/get_meter_readings.dart';
+import '../../features/settings/data/repositories/settings_repository_impl.dart';
+import '../../features/settings/domain/repositories/settings_repository.dart';
 
 /// Simple service locator for dependency injection.
 /// Registers all dependencies as singletons.
@@ -16,7 +20,11 @@ class ServiceLocator {
   final Map<Type, dynamic> _services = {};
 
   /// Initialize and register all dependencies.
-  void init() {
+  Future<void> init() async {
+    // Shared Preferences
+    final sharedPreferences = await SharedPreferences.getInstance();
+    _register<SharedPreferences>(sharedPreferences);
+
     // Data sources
     final dataSource = CustomerDataSourceImpl();
     _register<CustomerDataSource>(dataSource);
@@ -25,10 +33,14 @@ class ServiceLocator {
     final repository = CustomerRepositoryImpl(dataSource);
     _register<CustomerRepository>(repository);
 
+    final settingsRepository = SettingsRepositoryImpl(sharedPreferences);
+    _register<SettingsRepository>(settingsRepository);
+
     // Use cases
     _register<GetCustomers>(GetCustomers(repository));
     _register<GetMeterReadings>(GetMeterReadings(repository));
     _register<AddMeterReading>(AddMeterReading(repository));
+    _register<AddCustomer>(AddCustomer(repository));
   }
 
   void _register<T>(T service) {

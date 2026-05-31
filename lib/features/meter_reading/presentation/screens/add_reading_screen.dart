@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../settings/domain/repositories/settings_repository.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/entities/meter_reading.dart';
 import '../../domain/usecases/add_meter_reading.dart';
+import '../../domain/usecases/get_meter_readings.dart';
+import 'invoice_screen.dart';
 
 /// Screen for entering a new meter reading value.
 class AddReadingScreen extends StatefulWidget {
@@ -17,9 +20,28 @@ class AddReadingScreen extends StatefulWidget {
 
 class _AddReadingScreenState extends State<AddReadingScreen> {
   final _addMeterReading = ServiceLocator.instance.get<AddMeterReading>();
+  final _getMeterReadings = ServiceLocator.instance.get<GetMeterReadings>();
+  final _settingsRepository = ServiceLocator.instance.get<SettingsRepository>();
+
   final _formKey = GlobalKey<FormState>();
   final _readingController = TextEditingController();
   bool _isSaving = false;
+  double _previousReadingValue = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreviousReading();
+  }
+
+  Future<void> _loadPreviousReading() async {
+    final readings = await _getMeterReadings(widget.customer.id);
+    if (readings.isNotEmpty) {
+      setState(() {
+        _previousReadingValue = readings.first.value;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -88,14 +110,36 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            widget.customer.meterNumber,
+                            'رقم العداد: ${widget.customer.meterNumber}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
-                              letterSpacing: 1.2,
                             ),
                           ),
                         ],
                       ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Previous reading info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('القراءة السابقة:'),
+                    Text(
+                      '$_previousReadingValue kWh',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -112,7 +156,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'قيمة القراءة',
+                    'قيمة القراءة الحالية',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -141,7 +185,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                     color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                     fontWeight: FontWeight.bold,
                   ),
-                  suffixText: 'كيلوواط',
+                  suffixText: 'kWh',
                   suffixStyle: theme.textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -211,7 +255,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                       )
                     : const Icon(Icons.save_rounded),
                 label: Text(
-                  _isSaving ? 'جاري الحفظ...' : 'حفظ القراءة',
+                  _isSaving ? 'جاري الحفظ...' : 'حفظ القراءة وإصدار الفاتورة',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -239,8 +283,8 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     if (number == null) {
       return 'يرجى إدخال رقم صحيح';
     }
-    if (number <= 0) {
-      return 'يجب أن تكون القراءة رقماً موجباً';
+    if (number <= _previousReadingValue) {
+      return 'يجب أن تكون القراءة الحالية أكبر من السابقة ($_previousReadingValue)';
     }
     return null;
   }
@@ -251,26 +295,37 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     setState(() => _isSaving = true);
 
     try {
+      final currentValue = double.parse(_readingController.text);
+      final pricePerKwh = await _settingsRepository.getPricePerKwh();
+      final consumption = currentValue - _previousReadingValue;
+      final totalBill = consumption * pricePerKwh;
+
       final reading = MeterReading(
         id: 0, // Will be assigned by the data source
         customerId: widget.customer.id,
-        value: double.parse(_readingController.text),
+        value: currentValue,
+        previousValue: _previousReadingValue,
+        consumption: consumption,
+        pricePerKwh: pricePerKwh,
+        totalBill: totalBill,
         readingDate: DateTime.now(),
       );
 
       await _addMeterReading(reading);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('تم حفظ القراءة بنجاح'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+        // Find the newly added reading (it will have the actual ID)
+        final allReadings = await _getMeterReadings(widget.customer.id);
+        final savedReading = allReadings.first; // Should be the newest
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => InvoiceScreen(
+              customer: widget.customer,
+              reading: savedReading,
             ),
           ),
         );
-        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -279,10 +334,6 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
           SnackBar(
             content: Text('حدث خطأ: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
           ),
         );
       }
