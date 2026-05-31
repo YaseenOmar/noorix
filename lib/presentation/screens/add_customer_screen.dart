@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/di/service_locator.dart';
+import '../../core/di/service_locator.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/usecases/add_customer.dart';
 

@@ -1,13 +1,13 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../features/meter_reading/data/datasources/customer_data_source.dart';
-import '../../features/meter_reading/data/repositories/customer_repository_impl.dart';
-import '../../features/meter_reading/domain/repositories/customer_repository.dart';
-import '../../features/meter_reading/domain/usecases/add_customer.dart';
-import '../../features/meter_reading/domain/usecases/add_meter_reading.dart';
-import '../../features/meter_reading/domain/usecases/get_customers.dart';
-import '../../features/meter_reading/domain/usecases/get_meter_readings.dart';
-import '../../features/settings/data/repositories/settings_repository_impl.dart';
-import '../../features/settings/domain/repositories/settings_repository.dart';
+import '../../data/datasources/customer_data_source.dart';
+import '../../data/repositories/customer_repository_impl.dart';
+import '../../data/repositories/settings_repository_impl.dart';
+import '../../domain/repositories/customer_repository.dart';
+import '../../domain/repositories/settings_repository.dart';
+import '../../domain/usecases/add_customer.dart';
+import '../../domain/usecases/add_meter_reading.dart';
+import '../../domain/usecases/get_customers.dart';
+import '../../domain/usecases/get_meter_readings.dart';
 
 /// Simple service locator for dependency injection.
 /// Registers all dependencies as singletons.

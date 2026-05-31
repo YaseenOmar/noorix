@@ -2,7 +2,6 @@ import '../entities/customer.dart';
 import '../entities/meter_reading.dart';
 
 /// Abstract repository contract for customer and meter reading operations.
-/// The domain layer depends only on this abstraction.
 abstract class CustomerRepository {
   Future<List<Customer>> getCustomers();
   Future<void> addCustomer(Customer customer);

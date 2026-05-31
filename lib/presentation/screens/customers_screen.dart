@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/di/service_locator.dart';
-import '../../../settings/presentation/screens/settings_screen.dart';
+import '../../core/di/service_locator.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/usecases/get_customers.dart';
 import '../widgets/customer_card.dart';
 import 'add_customer_screen.dart';
 import 'customer_details_screen.dart';
+import 'settings_screen.dart';
 
 /// Displays the list of all customers.
 class CustomersScreen extends StatefulWidget {

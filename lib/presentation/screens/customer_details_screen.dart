@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/di/service_locator.dart';
+import '../../core/di/service_locator.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/entities/meter_reading.dart';
 import '../../domain/usecases/get_meter_readings.dart';

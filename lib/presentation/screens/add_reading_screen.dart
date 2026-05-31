@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/di/service_locator.dart';
-import '../../../settings/domain/repositories/settings_repository.dart';
+import '../../core/di/service_locator.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/entities/meter_reading.dart';
+import '../../domain/repositories/settings_repository.dart';
 import '../../domain/usecases/add_meter_reading.dart';
 import '../../domain/usecases/get_meter_readings.dart';
 import 'invoice_screen.dart';
