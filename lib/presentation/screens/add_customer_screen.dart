@@ -15,6 +15,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _meterController = TextEditingController();
+  final _phoneController = TextEditingController();
   bool _isSaving = false;
 
   @override
@@ -34,6 +35,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         id: 0, // Assigned by data source
         name: _nameController.text.trim(),
         meterNumber: _meterController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
       );
 
       await _addCustomer(customer);
@@ -87,6 +89,20 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 controller: _meterController,
                 decoration: InputDecoration(
                   labelText: 'رقم العداد',
+                  prefixIcon: const Icon(Icons.electric_meter),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'يرجى إدخال رقم العداد' : null,
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _meterController,
+                decoration: InputDecoration(
+                  labelText: 'رقم الجوال',
                   prefixIcon: const Icon(Icons.electric_meter),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
