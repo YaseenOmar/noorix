@@ -1,4 +1,4 @@
-import '../entities/customer.dart';
+import '../entities/user.dart';
 import '../repositories/customer_repository.dart';
 
 /// Retrieves the list of all customers.
@@ -7,7 +7,7 @@ class GetCustomers {
 
   const GetCustomers(this.repository);
 
-  Future<List<Customer>> call() {
+  Future<List<UserEntity>> call() {
     return repository.getCustomers();
   }
 }

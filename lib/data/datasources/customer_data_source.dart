@@ -1,10 +1,10 @@
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/entities/meter_reading.dart';
 
 /// Abstract data source contract.
 abstract class CustomerDataSource {
-  Future<List<Customer>> getCustomers();
-  Future<void> addCustomer(Customer customer);
+  Future<List<UserEntity>> getCustomers();
+  Future<void> addCustomer(UserEntity customer);
   Future<List<MeterReading>> getMeterReadings(int customerId);
   Future<List<MeterReading>> getAllMeterReadings();
   Future<void> addMeterReading(MeterReading reading);
@@ -13,15 +13,15 @@ abstract class CustomerDataSource {
 /// In-memory implementation using Lists.
 class CustomerDataSourceImpl implements CustomerDataSource {
   // Mock customers
-  final List<Customer> _customers = [
-    const Customer(
+  final List<UserEntity> _customers = [
+    const UserEntity(
       id: 1,
       name: 'أحمد علي',
       meterNumber: 'MTR-1001',
       phoneNumber: '0599123456',
       address: 'شارع الجلاء، غزة',
     ),
-    const Customer(
+    const UserEntity(
       id: 2,
       name: 'سارة خالد',
       meterNumber: 'MTR-1002',
@@ -38,13 +38,13 @@ class CustomerDataSourceImpl implements CustomerDataSource {
   int _nextReadingId = 1;
 
   @override
-  Future<List<Customer>> getCustomers() async {
+  Future<List<UserEntity>> getCustomers() async {
     return List.unmodifiable(_customers);
   }
 
   @override
-  Future<void> addCustomer(Customer customer) async {
-    final newCustomer = Customer(
+  Future<void> addCustomer(UserEntity customer) async {
+    final newCustomer = UserEntity(
       id: _nextCustomerId++,
       name: customer.name,
       meterNumber: customer.meterNumber,

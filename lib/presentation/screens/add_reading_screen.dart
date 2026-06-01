@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/di/service_locator.dart';
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/entities/meter_reading.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../domain/usecases/add_meter_reading.dart';
@@ -10,7 +10,7 @@ import 'invoice_screen.dart';
 
 /// Screen for entering a new meter reading value.
 class AddReadingScreen extends StatefulWidget {
-  final Customer customer;
+  final UserEntity customer;
 
   const AddReadingScreen({super.key, required this.customer});
 

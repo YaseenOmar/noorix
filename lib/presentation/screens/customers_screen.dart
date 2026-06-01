@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/di/service_locator.dart';
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/usecases/get_customers.dart';
 import '../widgets/customer_card.dart';
 import 'add_customer_screen.dart';
@@ -18,7 +18,7 @@ class CustomersScreen extends StatefulWidget {
 class _CustomersScreenState extends State<CustomersScreen> {
   final _getCustomers = ServiceLocator.instance.get<GetCustomers>();
 
-  List<Customer> _customers = [];
+  List<UserEntity> _customers = [];
   bool _isLoading = true;
 
   @override
@@ -183,7 +183,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     );
   }
 
-  void _navigateToDetails(Customer customer) {
+  void _navigateToDetails(UserEntity customer) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CustomerDetailsScreen(customer: customer),
@@ -203,8 +203,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
 }
 
 class CustomerSearchDelegate extends SearchDelegate {
-  final List<Customer> customers;
-  final Function(Customer) onCustomerTap;
+  final List<UserEntity> customers;
+  final Function(UserEntity) onCustomerTap;
 
   CustomerSearchDelegate({
     required this.customers,

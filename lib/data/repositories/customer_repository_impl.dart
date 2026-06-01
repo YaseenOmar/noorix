@@ -1,4 +1,4 @@
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/entities/meter_reading.dart';
 import '../../domain/repositories/customer_repository.dart';
 import '../datasources/customer_data_source.dart';
@@ -10,12 +10,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
   const CustomerRepositoryImpl(this.dataSource);
 
   @override
-  Future<List<Customer>> getCustomers() {
+  Future<List<UserEntity>> getCustomers() {
     return dataSource.getCustomers();
   }
 
   @override
-  Future<void> addCustomer(Customer customer) {
+  Future<void> addCustomer(UserEntity customer) {
     return dataSource.addCustomer(customer);
   }
 

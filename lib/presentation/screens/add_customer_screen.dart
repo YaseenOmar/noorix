@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/di/service_locator.dart';
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/usecases/add_customer.dart';
 
 class AddCustomerScreen extends StatefulWidget {
@@ -34,7 +34,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final customer = Customer(
+      final customer = UserEntity(
         id: 0, // Assigned by data source
         name: _nameController.text.trim(),
         meterNumber: _meterController.text.trim(),

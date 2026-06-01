@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 
 /// A styled card displaying customer info in the customers list.
 class CustomerCard extends StatelessWidget {
-  final Customer customer;
+  final UserEntity customer;
   final VoidCallback onTap;
 
   const CustomerCard({

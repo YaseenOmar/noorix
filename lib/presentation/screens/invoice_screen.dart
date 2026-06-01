@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/entities/meter_reading.dart';
 
 class InvoiceScreen extends StatelessWidget {
-  final Customer customer;
+  final UserEntity customer;
   final MeterReading reading;
 
   const InvoiceScreen({

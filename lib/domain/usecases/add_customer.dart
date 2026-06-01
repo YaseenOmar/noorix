@@ -1,4 +1,4 @@
-import '../entities/customer.dart';
+import '../entities/user.dart';
 import '../repositories/customer_repository.dart';
 
 class AddCustomer {
@@ -6,7 +6,7 @@ class AddCustomer {
 
   AddCustomer(this.repository);
 
-  Future<void> call(Customer customer) {
+  Future<void> call(UserEntity customer) {
     return repository.addCustomer(customer);
   }
 }

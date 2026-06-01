@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/di/service_locator.dart';
-import '../../domain/entities/customer.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/entities/meter_reading.dart';
 import '../../domain/usecases/get_meter_readings.dart';
 import '../widgets/reading_tile.dart';
@@ -9,7 +9,7 @@ import 'invoice_screen.dart';
 
 /// Displays customer details and their reading history.
 class CustomerDetailsScreen extends StatefulWidget {
-  final Customer customer;
+  final UserEntity customer;
 
   const CustomerDetailsScreen({super.key, required this.customer});
 
