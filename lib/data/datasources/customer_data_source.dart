@@ -6,6 +6,7 @@ abstract class CustomerDataSource {
   Future<List<Customer>> getCustomers();
   Future<void> addCustomer(Customer customer);
   Future<List<MeterReading>> getMeterReadings(int customerId);
+  Future<List<MeterReading>> getAllMeterReadings();
   Future<void> addMeterReading(MeterReading reading);
 }
 
@@ -59,6 +60,11 @@ class CustomerDataSourceImpl implements CustomerDataSource {
         .where((r) => r.customerId == customerId)
         .toList()
       ..sort((a, b) => b.readingDate.compareTo(a.readingDate));
+  }
+
+  @override
+  Future<List<MeterReading>> getAllMeterReadings() async {
+    return List.unmodifiable(_readings);
   }
 
   @override

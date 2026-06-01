@@ -16,12 +16,15 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _nameController = TextEditingController();
   final _meterController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
   bool _isSaving = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     _meterController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -36,6 +39,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         name: _nameController.text.trim(),
         meterNumber: _meterController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
+        address: _addressController.text.trim(),
       );
 
       await _addCustomer(customer);
@@ -72,6 +76,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             children: [
               const Icon(Icons.person_add_outlined, size: 80, color: Colors.teal),
               const SizedBox(height: 32),
+              
+              // Name Field
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
@@ -85,6 +91,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     value == null || value.isEmpty ? 'يرجى إدخال الاسم' : null,
               ),
               const SizedBox(height: 16),
+              
+              // Meter Number Field
               TextFormField(
                 controller: _meterController,
                 decoration: InputDecoration(
@@ -99,19 +107,37 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Phone Number Field
               TextFormField(
-                controller: _meterController,
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   labelText: 'رقم الجوال',
-                  prefixIcon: const Icon(Icons.electric_meter),
+                  prefixIcon: const Icon(Icons.phone),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'يرجى إدخال رقم العداد' : null,
+                    value == null || value.isEmpty ? 'يرجى إدخال رقم الجوال' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Address Field
+              TextFormField(
+                controller: _addressController,
+                decoration: InputDecoration(
+                  labelText: 'العنوان',
+                  prefixIcon: const Icon(Icons.location_on),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'يرجى إدخال العنوان' : null,
               ),
               const SizedBox(height: 40),
+
               FilledButton(
                 onPressed: _isSaving ? null : _saveCustomer,
                 style: FilledButton.styleFrom(

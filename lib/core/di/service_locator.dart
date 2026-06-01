@@ -7,6 +7,7 @@ import '../../domain/repositories/settings_repository.dart';
 import '../../domain/usecases/add_customer.dart';
 import '../../domain/usecases/add_meter_reading.dart';
 import '../../domain/usecases/get_customers.dart';
+import '../../domain/usecases/get_home_stats.dart';
 import '../../domain/usecases/get_meter_readings.dart';
 
 /// Simple service locator for dependency injection.
@@ -41,6 +42,7 @@ class ServiceLocator {
     _register<GetMeterReadings>(GetMeterReadings(repository));
     _register<AddMeterReading>(AddMeterReading(repository));
     _register<AddCustomer>(AddCustomer(repository));
+    _register<GetHomeStats>(GetHomeStats(repository));
   }
 
   void _register<T>(T service) {
