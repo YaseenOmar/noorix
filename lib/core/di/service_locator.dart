@@ -6,9 +6,14 @@ import '../../domain/repositories/customer_repository.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../domain/usecases/add_customer.dart';
 import '../../domain/usecases/add_meter_reading.dart';
+import '../../domain/usecases/get_all_meter_readings.dart';
 import '../../domain/usecases/get_customers.dart';
 import '../../domain/usecases/get_home_stats.dart';
 import '../../domain/usecases/get_meter_readings.dart';
+import '../../domain/usecases/complete_onboarding.dart';
+import '../../domain/usecases/get_onboarding_status.dart';
+import '../../domain/usecases/get_price_per_kwh.dart';
+import '../../domain/usecases/set_price_per_kwh.dart';
 
 /// Simple service locator for dependency injection.
 /// Registers all dependencies as singletons.
@@ -40,9 +45,14 @@ class ServiceLocator {
     // Use cases
     _register<GetCustomers>(GetCustomers(repository));
     _register<GetMeterReadings>(GetMeterReadings(repository));
+    _register<GetAllMeterReadings>(GetAllMeterReadings(repository));
     _register<AddMeterReading>(AddMeterReading(repository));
     _register<AddCustomer>(AddCustomer(repository));
     _register<GetHomeStats>(GetHomeStats(repository));
+    _register<GetPricePerKwh>(GetPricePerKwh(settingsRepository));
+    _register<SetPricePerKwh>(SetPricePerKwh(settingsRepository));
+    _register<GetOnboardingStatus>(GetOnboardingStatus(settingsRepository));
+    _register<CompleteOnboarding>(CompleteOnboarding(settingsRepository));
   }
 
   void _register<T>(T service) {
@@ -53,7 +63,9 @@ class ServiceLocator {
   T get<T>() {
     final service = _services[T];
     if (service == null) {
-      throw Exception('Service ${T.toString()} not registered in ServiceLocator');
+      throw Exception(
+        'Service ${T.toString()} not registered in ServiceLocator',
+      );
     }
     return service as T;
   }

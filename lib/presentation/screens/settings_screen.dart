@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/di/service_locator.dart';
-import '../../domain/repositories/settings_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/app_cubit.dart';
+import '../cubit/app_state.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,30 +12,26 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _settingsRepository = ServiceLocator.instance.get<SettingsRepository>();
   final _priceController = TextEditingController();
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    final price = await _settingsRepository.getPricePerKwh();
-    setState(() {
-      _priceController.text = price.toString();
-      _isLoading = false;
-    });
+    _priceController.text = context
+        .read<AppCubit>()
+        .state
+        .pricePerKwh
+        .toString();
   }
 
   Future<void> _saveSettings() async {
     final price = double.tryParse(_priceController.text) ?? 0.0;
-    await _settingsRepository.setPricePerKwh(price);
+    final saved = await context.read<AppCubit>().savePrice(price);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حفظ الإعدادات')),
+        SnackBar(
+          content: Text(saved ? 'تم حفظ الإعدادات' : 'تعذر حفظ الإعدادات'),
+        ),
       );
     }
   }
@@ -51,11 +48,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('الإعدادات'),
-        centerTitle: true,
-      ),
-      body: _isLoading
+      appBar: AppBar(title: const Text('الإعدادات'), centerTitle: true),
+      body: context.watch<AppCubit>().state.status == AppStatus.loading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(20),
@@ -86,7 +80,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             inputFormatters: [
                               FilteringTextInputFormatter.allow(
-                                  RegExp(r'^\d*\.?\d*')),
+                                RegExp(r'^\d*\.?\d*'),
+                              ),
                             ],
                             decoration: InputDecoration(
                               hintText: '0.0',

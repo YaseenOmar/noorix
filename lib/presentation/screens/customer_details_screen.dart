@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/di/service_locator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/entities/meter_reading.dart';
-import '../../domain/usecases/get_meter_readings.dart';
+import '../cubit/app_cubit.dart';
+import '../cubit/app_state.dart';
 import '../widgets/reading_tile.dart';
 import 'add_reading_screen.dart';
 import 'invoice_screen.dart';
@@ -18,11 +18,6 @@ class CustomerDetailsScreen extends StatefulWidget {
 }
 
 class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
-  final _getMeterReadings = ServiceLocator.instance.get<GetMeterReadings>();
-
-  List<MeterReading> _readings = [];
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
@@ -30,14 +25,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
   }
 
   Future<void> _loadReadings() async {
-    setState(() => _isLoading = true);
-    final readings = await _getMeterReadings(widget.customer.id);
-    if (mounted) {
-      setState(() {
-        _readings = readings;
-        _isLoading = false;
-      });
-    }
+    await context.read<AppCubit>().loadReadings(widget.customer.id);
   }
 
   @override
@@ -45,6 +33,8 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final customer = widget.customer;
+    final state = context.watch<AppCubit>().state;
+    final readings = state.readingsFor(customer.id);
 
     return Scaffold(
       body: CustomScrollView(
@@ -149,7 +139,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
                           Text(
                             customer.meterNumber,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onPrimary.withValues(alpha: 0.9),
+                              color: colorScheme.onPrimary.withValues(
+                                alpha: 0.9,
+                              ),
                               letterSpacing: 1.5,
                               fontWeight: FontWeight.w500,
                             ),
@@ -161,7 +153,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
 
                     // Readings count
                     Text(
-                      '${_readings.length} قراءة مسجلة',
+                      '${readings.length} قراءة مسجلة',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onPrimary.withValues(alpha: 0.7),
                       ),
@@ -197,14 +189,14 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
           ),
 
           // Readings list
-          if (_isLoading)
+          if (state.status == AppStatus.loading && readings.isEmpty)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(40),
                 child: Center(child: CircularProgressIndicator()),
               ),
             )
-          else if (_readings.isEmpty)
+          else if (readings.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 48),
@@ -215,7 +207,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
                       Icon(
                         Icons.inbox_outlined,
                         size: 56,
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.4,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -228,7 +222,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
                       Text(
                         'اضغط على الزر لإضافة قراءة جديدة',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -238,26 +234,23 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
             )
           else
             SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final reading = _readings[index];
-                  return ReadingTile(
-                    reading: reading,
-                    index: _readings.length - index,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => InvoiceScreen(
-                            customer: widget.customer,
-                            reading: reading,
-                          ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final reading = readings[index];
+                return ReadingTile(
+                  reading: reading,
+                  index: readings.length - index,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => InvoiceScreen(
+                          customer: widget.customer,
+                          reading: reading,
                         ),
-                      );
-                    },
-                  );
-                },
-                childCount: _readings.length,
-              ),
+                      ),
+                    );
+                  },
+                );
+              }, childCount: readings.length),
             ),
 
           // Bottom spacing

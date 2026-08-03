@@ -1,189 +1,171 @@
 import 'package:flutter/material.dart';
-import '../../core/di/service_locator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/usecases/get_customers.dart';
+import '../cubit/app_cubit.dart';
+import '../cubit/app_state.dart';
 import '../widgets/customer_card.dart';
 import 'add_customer_screen.dart';
 import 'customer_details_screen.dart';
 import 'settings_screen.dart';
 
 /// Displays the list of all customers.
-class CustomersScreen extends StatefulWidget {
+class CustomersScreen extends StatelessWidget {
   const CustomersScreen({super.key});
-
-  @override
-  State<CustomersScreen> createState() => _CustomersScreenState();
-}
-
-class _CustomersScreenState extends State<CustomersScreen> {
-  final _getCustomers = ServiceLocator.instance.get<GetCustomers>();
-
-  List<UserEntity> _customers = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCustomers();
-  }
-
-  Future<void> _loadCustomers() async {
-    final customers = await _getCustomers();
-    if (mounted) {
-      setState(() {
-        _customers = customers;
-        _isLoading = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // App bar
-          SliverAppBar.large(
-            title: const Text('العملاء'),
-            centerTitle: true,
-            expandedHeight: 140,
-            backgroundColor: colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  showSearch(
-                    context: context,
-                    delegate: CustomerSearchDelegate(
-                      customers: _customers,
-                      onCustomerTap: _navigateToDetails,
+    return BlocBuilder<AppCubit, AppState>(
+      builder: (context, state) {
+        final customers = state.customers;
+        return Scaffold(
+          body: CustomScrollView(
+            slivers: [
+              // App bar
+              SliverAppBar.large(
+                title: const Text('العملاء'),
+                centerTitle: true,
+                expandedHeight: 140,
+                backgroundColor: colorScheme.surface,
+                surfaceTintColor: Colors.transparent,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () {
+                      showSearch(
+                        context: context,
+                        delegate: CustomerSearchDelegate(
+                          customers: customers,
+                          onCustomerTap: (customer) =>
+                              _navigateToDetails(context, customer),
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          colorScheme.primary.withValues(alpha: 0.08),
+                          colorScheme.surface,
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
                     ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primary.withValues(alpha: 0.08),
-                      colorScheme.surface,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
-            ),
-          ),
 
-          // Header info
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
+              // Header info
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.people_outline_rounded,
+                              size: 16,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${customers.length} عميل',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Content
+              if (state.status == AppStatus.loading)
+                const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (customers.isEmpty)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.people_outline_rounded,
-                          size: 16,
-                          color: colorScheme.onPrimaryContainer,
+                          Icons.person_off_outlined,
+                          size: 64,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(height: 16),
                         Text(
-                          '${_customers.length} عميل',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.w600,
+                          'لا يوجد عملاء',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-
-          // Content
-          if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_customers.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.person_off_outlined,
-                      size: 64,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'لا يوجد عملاء',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final customer = customers[index];
+                    return CustomerCard(
+                      customer: customer,
+                      onTap: () => _navigateToDetails(context, customer),
+                    );
+                  }, childCount: customers.length),
                 ),
-              ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final customer = _customers[index];
-                  return CustomerCard(
-                    customer: customer,
-                    onTap: () => _navigateToDetails(customer),
-                  );
-                },
-                childCount: _customers.length,
-              ),
-            ),
 
-          // Bottom spacing
-          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAddCustomer,
-        icon: const Icon(Icons.person_add_rounded),
-        label: const Text('إضافة عميل'),
-      ),
+              // Bottom spacing
+              const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _navigateToAddCustomer(context),
+            icon: const Icon(Icons.person_add_rounded),
+            label: const Text('إضافة عميل'),
+          ),
+        );
+      },
     );
   }
 
-  void _navigateToDetails(UserEntity customer) {
+  void _navigateToDetails(BuildContext context, UserEntity customer) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CustomerDetailsScreen(customer: customer),
@@ -191,13 +173,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
     );
   }
 
-  Future<void> _navigateToAddCustomer() async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AddCustomerScreen()),
-    );
+  Future<void> _navigateToAddCustomer(BuildContext context) async {
+    final result = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const AddCustomerScreen()));
 
-    if (result == true) {
-      _loadCustomers();
+    if (result == true && context.mounted) {
+      await context.read<AppCubit>().refresh();
     }
   }
 }
@@ -206,22 +188,17 @@ class CustomerSearchDelegate extends SearchDelegate {
   final List<UserEntity> customers;
   final Function(UserEntity) onCustomerTap;
 
-  CustomerSearchDelegate({
-    required this.customers,
-    required this.onCustomerTap,
-  }) : super(
-          searchFieldLabel: 'بحث عن عميل...',
-          keyboardType: TextInputType.text,
-        );
+  CustomerSearchDelegate({required this.customers, required this.onCustomerTap})
+    : super(
+        searchFieldLabel: 'بحث عن عميل...',
+        keyboardType: TextInputType.text,
+      );
 
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
       if (query.isNotEmpty)
-        IconButton(
-          icon: const Icon(Icons.clear),
-          onPressed: () => query = '',
-        ),
+        IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
     ];
   }
 
@@ -241,9 +218,11 @@ class CustomerSearchDelegate extends SearchDelegate {
 
   Widget _buildSearchResults() {
     final filteredList = customers
-        .where((c) =>
-            c.name.toLowerCase().contains(query.toLowerCase()) ||
-            c.meterNumber.toLowerCase().contains(query.toLowerCase()))
+        .where(
+          (c) =>
+              c.name.toLowerCase().contains(query.toLowerCase()) ||
+              c.meterNumber.toLowerCase().contains(query.toLowerCase()),
+        )
         .toList();
 
     if (filteredList.isEmpty) {

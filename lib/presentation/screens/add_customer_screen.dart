@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/di/service_locator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/usecases/add_customer.dart';
+import '../cubit/app_cubit.dart';
+import '../cubit/app_state.dart';
 
 class AddCustomerScreen extends StatefulWidget {
   const AddCustomerScreen({super.key});
@@ -11,13 +12,11 @@ class AddCustomerScreen extends StatefulWidget {
 }
 
 class _AddCustomerScreenState extends State<AddCustomerScreen> {
-  final _addCustomer = ServiceLocator.instance.get<AddCustomer>();
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _meterController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
-  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -31,42 +30,30 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   Future<void> _saveCustomer() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSaving = true);
+    final customer = UserEntity(
+      id: 0, // Assigned by data source
+      name: _nameController.text.trim(),
+      meterNumber: _meterController.text.trim(),
+      phoneNumber: _phoneController.text.trim(),
+      address: _addressController.text.trim(),
+    );
 
-    try {
-      final customer = UserEntity(
-        id: 0, // Assigned by data source
-        name: _nameController.text.trim(),
-        meterNumber: _meterController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
-        address: _addressController.text.trim(),
+    final saved = await context.read<AppCubit>().addCustomer(customer);
+    if (!mounted) return;
+    if (saved) {
+      Navigator.of(context).pop(true);
+    } else {
+      final message = context.read<AppCubit>().state.errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ: ${message ?? 'تعذر حفظ العميل'}')),
       );
-
-      await _addCustomer(customer);
-
-      if (mounted) {
-        Navigator.of(context).pop(true);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ: $e')),
-        );
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('إضافة عميل جديد'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('إضافة عميل جديد'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -74,9 +61,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.person_add_outlined, size: 80, color: Colors.teal),
+              const Icon(
+                Icons.person_add_outlined,
+                size: 80,
+                color: Colors.teal,
+              ),
               const SizedBox(height: 32),
-              
+
               // Name Field
               TextFormField(
                 controller: _nameController,
@@ -91,7 +82,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     value == null || value.isEmpty ? 'يرجى إدخال الاسم' : null,
               ),
               const SizedBox(height: 16),
-              
+
               // Meter Number Field
               TextFormField(
                 controller: _meterController,
@@ -102,8 +93,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'يرجى إدخال رقم العداد' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'يرجى إدخال رقم العداد'
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -118,8 +110,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'يرجى إدخال رقم الجوال' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'يرجى إدخال رقم الجوال'
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -133,26 +126,33 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'يرجى إدخال العنوان' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'يرجى إدخال العنوان'
+                    : null,
               ),
               const SizedBox(height: 40),
 
-              FilledButton(
-                onPressed: _isSaving ? null : _saveCustomer,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              BlocBuilder<AppCubit, AppState>(
+                buildWhen: (previous, current) =>
+                    previous.submissionStatus != current.submissionStatus,
+                builder: (context, state) => FilledButton(
+                  onPressed: state.submissionStatus == SubmissionStatus.loading
+                      ? null
+                      : _saveCustomer,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
+                  child: state.submissionStatus == SubmissionStatus.loading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('حفظ العميل'),
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('حفظ العميل'),
               ),
             ],
           ),

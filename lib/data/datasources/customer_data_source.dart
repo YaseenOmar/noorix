@@ -56,9 +56,7 @@ class CustomerDataSourceImpl implements CustomerDataSource {
 
   @override
   Future<List<MeterReading>> getMeterReadings(int customerId) async {
-    return _readings
-        .where((r) => r.customerId == customerId)
-        .toList()
+    return _readings.where((r) => r.customerId == customerId).toList()
       ..sort((a, b) => b.readingDate.compareTo(a.readingDate));
   }
 

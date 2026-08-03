@@ -1,0 +1,79 @@
+name: Build Flutter iOS for Appetize
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master, main ]
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      # Pull project from GitHub
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Install Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Check Flutter installation
+      - name: Flutter version
+        run: flutter --version
+
+      # Install Dart / Flutter packages
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Check project for obvious problems
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      # Build Flutter app specifically for iOS Simulator
+      - name: Build iOS Simulator App
+        run: |
+          flutter build ios \
+            --simulator \
+            --debug
+
+      # Verify that Runner.app was generated
+      - name: Check iOS app
+        run: |
+          echo "=== Runner.app ==="
+          ls -la build/ios/iphonesimulator/Runner.app
+
+          echo "=== Architecture ==="
+          file build/ios/iphonesimulator/Runner.app/Runner
+
+          echo "=== Info.plist ==="
+          plutil -p build/ios/iphonesimulator/Runner.app/Info.plist
+
+      # Compress Runner.app correctly for Appetize
+      - name: Zip .app bundle
+        run: |
+          cd build/ios/iphonesimulator
+          ditto -c -k \
+            --sequesterRsrc \
+            --keepParent \
+            Runner.app \
+            "$GITHUB_WORKSPACE/Runner.app.zip"
+
+      # Upload directly to Appetize
+      - name: Upload to Appetize
+        uses: appetizeio/github-action-appetize@v1.0.5
+        with:
+          apiToken: ${{ secrets.APPETIZE_API_TOKEN }}
+          appFile: Runner.app.zip
+          platform: 'ios'
+
+      # Keep downloadable copy in GitHub
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-simulator
+          path: Runner.app.zip
+          retention-days: 5

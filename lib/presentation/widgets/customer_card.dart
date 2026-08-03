@@ -6,11 +6,7 @@ class CustomerCard extends StatelessWidget {
   final UserEntity customer;
   final VoidCallback onTap;
 
-  const CustomerCard({
-    super.key,
-    required this.customer,
-    required this.onTap,
-  });
+  const CustomerCard({super.key, required this.customer, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

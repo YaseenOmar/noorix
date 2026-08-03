@@ -87,7 +87,7 @@ class ReadingTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${reading.totalBill.toStringAsFixed(2)}',
+                        reading.totalBill.toStringAsFixed(2),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.bold,

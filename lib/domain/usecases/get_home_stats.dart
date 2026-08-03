@@ -1,18 +1,5 @@
 import '../repositories/customer_repository.dart';
-
-class HomeStats {
-  final int totalCustomers;
-  final int totalReadings;
-  final double totalConsumption;
-  final double totalRevenue;
-
-  HomeStats({
-    required this.totalCustomers,
-    required this.totalReadings,
-    required this.totalConsumption,
-    required this.totalRevenue,
-  });
-}
+import '../entities/home_stats.dart';
 
 class GetHomeStats {
   final CustomerRepository repository;

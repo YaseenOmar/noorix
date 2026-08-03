@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/di/service_locator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/entities/meter_reading.dart';
-import '../../domain/repositories/settings_repository.dart';
-import '../../domain/usecases/add_meter_reading.dart';
-import '../../domain/usecases/get_meter_readings.dart';
+import '../cubit/app_cubit.dart';
+import '../cubit/app_state.dart';
 import 'invoice_screen.dart';
 
 /// Screen for entering a new meter reading value.
@@ -19,14 +17,8 @@ class AddReadingScreen extends StatefulWidget {
 }
 
 class _AddReadingScreenState extends State<AddReadingScreen> {
-  final _addMeterReading = ServiceLocator.instance.get<AddMeterReading>();
-  final _getMeterReadings = ServiceLocator.instance.get<GetMeterReadings>();
-  final _settingsRepository = ServiceLocator.instance.get<SettingsRepository>();
-
   final _formKey = GlobalKey<FormState>();
   final _readingController = TextEditingController();
-  bool _isSaving = false;
-  double _previousReadingValue = 0.0;
 
   @override
   void initState() {
@@ -35,12 +27,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
   }
 
   Future<void> _loadPreviousReading() async {
-    final readings = await _getMeterReadings(widget.customer.id);
-    if (readings.isNotEmpty) {
-      setState(() {
-        _previousReadingValue = readings.first.value;
-      });
-    }
+    await context.read<AppCubit>().loadReadings(widget.customer.id);
   }
 
   @override
@@ -53,6 +40,10 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final state = context.watch<AppCubit>().state;
+    final readings = state.readingsFor(widget.customer.id);
+    final previousReadingValue = readings.isEmpty ? 0.0 : readings.first.value;
+    final isSaving = state.submissionStatus == SubmissionStatus.loading;
 
     return Scaffold(
       appBar: AppBar(
@@ -138,7 +129,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                   children: [
                     const Text('القراءة السابقة:'),
                     Text(
-                      '$_previousReadingValue kWh',
+                      '$previousReadingValue kWh',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -210,23 +201,19 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: colorScheme.error,
-                    ),
+                    borderSide: BorderSide(color: colorScheme.error),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: colorScheme.error,
-                      width: 2,
-                    ),
+                    borderSide: BorderSide(color: colorScheme.error, width: 2),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 20,
                   ),
                 ),
-                validator: _validateReading,
+                validator: (value) =>
+                    _validateReading(value, previousReadingValue),
                 autovalidateMode: AutovalidateMode.onUserInteraction,
               ),
               const SizedBox(height: 12),
@@ -243,8 +230,8 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
 
               // Save button
               FilledButton.icon(
-                onPressed: _isSaving ? null : _saveReading,
-                icon: _isSaving
+                onPressed: isSaving ? null : _saveReading,
+                icon: isSaving
                     ? SizedBox(
                         width: 20,
                         height: 20,
@@ -255,7 +242,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                       )
                     : const Icon(Icons.save_rounded),
                 label: Text(
-                  _isSaving ? 'جاري الحفظ...' : 'حفظ القراءة وإصدار الفاتورة',
+                  isSaving ? 'جاري الحفظ...' : 'حفظ القراءة وإصدار الفاتورة',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -275,7 +262,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     );
   }
 
-  String? _validateReading(String? value) {
+  String? _validateReading(String? value, double previousReadingValue) {
     if (value == null || value.trim().isEmpty) {
       return 'يرجى إدخال قيمة القراءة';
     }
@@ -283,8 +270,8 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     if (number == null) {
       return 'يرجى إدخال رقم صحيح';
     }
-    if (number <= _previousReadingValue) {
-      return 'يجب أن تكون القراءة الحالية أكبر من السابقة ($_previousReadingValue)';
+    if (number <= previousReadingValue) {
+      return 'يجب أن تكون القراءة الحالية أكبر من السابقة ($previousReadingValue)';
     }
     return null;
   }
@@ -292,51 +279,27 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
   Future<void> _saveReading() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSaving = true);
-
-    try {
-      final currentValue = double.parse(_readingController.text);
-      final pricePerKwh = await _settingsRepository.getPricePerKwh();
-      final consumption = currentValue - _previousReadingValue;
-      final totalBill = consumption * pricePerKwh;
-
-      final reading = MeterReading(
-        id: 0, // Will be assigned by the data source
-        customerId: widget.customer.id,
-        value: currentValue,
-        previousValue: _previousReadingValue,
-        consumption: consumption,
-        pricePerKwh: pricePerKwh,
-        totalBill: totalBill,
-        readingDate: DateTime.now(),
+    final currentValue = double.parse(_readingController.text);
+    final savedReading = await context.read<AppCubit>().addReading(
+      customer: widget.customer,
+      currentValue: currentValue,
+    );
+    if (!mounted) return;
+    if (savedReading != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) =>
+              InvoiceScreen(customer: widget.customer, reading: savedReading),
+        ),
       );
-
-      await _addMeterReading(reading);
-
-      if (mounted) {
-        // Find the newly added reading (it will have the actual ID)
-        final allReadings = await _getMeterReadings(widget.customer.id);
-        final savedReading = allReadings.first; // Should be the newest
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => InvoiceScreen(
-              customer: widget.customer,
-              reading: savedReading,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('حدث خطأ: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
+    } else {
+      final error = context.read<AppCubit>().state.errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ: ${error ?? 'تعذر حفظ القراءة'}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 }

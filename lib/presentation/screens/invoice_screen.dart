@@ -70,7 +70,8 @@ class InvoiceScreen extends StatelessWidget {
                             Text(
                               'رقم القراءة: #${reading.id}',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                                color: colorScheme.onPrimaryContainer
+                                    .withValues(alpha: 0.8),
                               ),
                             ),
                           ],
@@ -78,7 +79,9 @@ class InvoiceScreen extends StatelessWidget {
                         Icon(
                           Icons.receipt_long,
                           size: 48,
-                          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
+                          color: colorScheme.onPrimaryContainer.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ],
                     ),
@@ -88,8 +91,14 @@ class InvoiceScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         _InvoiceRow(label: 'اسم المشترك', value: customer.name),
-                        _InvoiceRow(label: 'رقم العداد', value: customer.meterNumber),
-                        _InvoiceRow(label: 'تاريخ القراءة', value: dateFormat.format(reading.readingDate)),
+                        _InvoiceRow(
+                          label: 'رقم العداد',
+                          value: customer.meterNumber,
+                        ),
+                        _InvoiceRow(
+                          label: 'تاريخ القراءة',
+                          value: dateFormat.format(reading.readingDate),
+                        ),
                         const Divider(height: 32),
                         _InvoiceRow(
                           label: 'القراءة الحالية',
@@ -97,17 +106,20 @@ class InvoiceScreen extends StatelessWidget {
                         ),
                         _InvoiceRow(
                           label: 'القراءة السابقة',
-                          value: '${reading.previousValue.toStringAsFixed(1)} kWh',
+                          value:
+                              '${reading.previousValue.toStringAsFixed(1)} kWh',
                         ),
                         _InvoiceRow(
                           label: 'الاستهلاك',
-                          value: '${reading.consumption.toStringAsFixed(1)} kWh',
+                          value:
+                              '${reading.consumption.toStringAsFixed(1)} kWh',
                           isBold: true,
                         ),
                         const Divider(height: 32),
                         _InvoiceRow(
                           label: 'سعر الوحدة',
-                          value: '${reading.pricePerKwh.toStringAsFixed(2)} شيكل',
+                          value:
+                              '${reading.pricePerKwh.toStringAsFixed(2)} شيكل',
                         ),
                         const SizedBox(height: 16),
                         Container(
@@ -118,7 +130,8 @@ class InvoiceScreen extends StatelessWidget {
                           ),
                           child: _InvoiceRow(
                             label: 'إجمالي الفاتورة',
-                            value: '${reading.totalBill.toStringAsFixed(2)} شيكل',
+                            value:
+                                '${reading.totalBill.toStringAsFixed(2)} شيكل',
                             isBold: true,
                             valueColor: colorScheme.primary,
                           ),
